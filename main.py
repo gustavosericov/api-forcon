@@ -1,33 +1,29 @@
 from fastapi import FastAPI
-import pyodbc
+import pymssql
 
 app = FastAPI()
 
-# Configuração de conexão com SQL Server
-server = '10.1.1.4\\forcon'
-database = 'FORCON_ESTOQUE'
-username = 'forcon_admin'
-password = 'Admin2026@#Forcon'
-
-connection_string = f"""
-DRIVER={{ODBC Driver 17 for SQL Server}};
-SERVER={server};
-DATABASE={database};
-UID={username};
-PWD={password};
-TrustServerCertificate=yes;
-"""
+server = "10.1.1.4\\forcon"
+database = "FORCON_ESTOQUE"
+username = "forcon_admin"
+password = "Admin2026@#Forcon"
 
 @app.get("/pedido/{nf}")
 def get_pedido(nf: int):
     try:
-        conn = pyodbc.connect(connection_string)
-        cursor = conn.cursor()
+        conn = pymssql.connect(
+            server=server,
+            user=username,
+            password=password,
+            database=database
+        )
+
+        cursor = conn.cursor(as_dict=True)
 
         query = """
             SELECT numero_nf, cliente, status
             FROM controle_nf_demo
-            WHERE numero_nf = ?
+            WHERE numero_nf = %s
         """
 
         cursor.execute(query, (nf,))
@@ -37,9 +33,9 @@ def get_pedido(nf: int):
 
         if row:
             return {
-                "numero_nf": row.numero_nf,
-                "cliente": row.cliente,
-                "status": row.status
+                "numero_nf": row["numero_nf"],
+                "cliente": row["cliente"],
+                "status": row["status"]
             }
         else:
             return {
