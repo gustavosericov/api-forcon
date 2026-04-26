@@ -14,13 +14,13 @@ password = "Forcon@2026!"
 
 def get_connection():
     conn = pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "DRIVER={ODBC Driver 18 for SQL Server};"
         f"SERVER={server};"
         f"DATABASE={database};"
         f"UID={username};"
         f"PWD={password};"
         "Encrypt=yes;"
-        "TrustServerCertificate=no;"
+        "TrustServerCertificate=yes;"
         "Connection Timeout=30;"
     )
     return conn
@@ -40,11 +40,11 @@ def get_pedido(codigo_tracking: str):
             SELECT
                 codigo_tracking,
                 numero_nf,
-                pedido,
+                numero_pedido,
                 cliente,
                 transportadora,
-                status,
-                etapa,
+                status_atual,
+                etapa_atual,
                 observacao
             FROM portal_cliente_status_nf
             WHERE codigo_tracking = ?
@@ -59,11 +59,11 @@ def get_pedido(codigo_tracking: str):
             return {
                 "codigo_tracking": row[0],
                 "numero_nf": row[1],
-                "pedido": row[2],
+                "numero_pedido": row[2],
                 "cliente": row[3],
                 "transportadora": row[4],
-                "status": row[5],
-                "etapa": row[6],
+                "status_atual": row[5],
+                "etapa_atual": row[6],
                 "observacao": row[7]
             }
         else:
