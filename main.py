@@ -1,47 +1,76 @@
 from fastapi import FastAPI
-import pymssql
+import pyodbc
 
 app = FastAPI()
 
-server = "10.1.1.4\\forcon"
-database = "FORCON_ESTOQUE"
-username = "forcon_admin"
-password = "Admin2026@#Forcon"
+# =========================
+# CONEXÃO AZURE SQL
+# =========================
 
-@app.get("/pedido/{nf}")
-def get_pedido(nf: int):
+server = "forcon-sql-server-demo.database.windows.net"
+database = "free-sql-db-1455719"
+username = "forconadmin"
+password = "Forcon@2026!"
+
+def get_connection():
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 18 for SQL Server};"
+        f"SERVER={server};"
+        f"DATABASE={database};"
+        f"UID={username};"
+        f"PWD={password};"
+        "Encrypt=yes;"
+        "TrustServerCertificate=no;"
+        "Connection Timeout=30;"
+    )
+    return conn
+
+
+# =========================
+# API CONSULTA PEDIDO
+# =========================
+
+@app.get("/pedido/{codigo_tracking}")
+def get_pedido(codigo_tracking: str):
     try:
-        conn = pymssql.connect(
-            server=server,
-            user=username,
-            password=password,
-            database=database
-        )
-
-        cursor = conn.cursor(as_dict=True)
+        conn = get_connection()
+        cursor = conn.cursor()
 
         query = """
-            SELECT numero_nf, cliente, status
-            FROM controle_nf_demo
-            WHERE numero_nf = %s
+            SELECT
+                codigo_tracking,
+                numero_nf,
+                pedido,
+                cliente,
+                transportadora,
+                status,
+                etapa,
+                observacao
+            FROM portal_cliente_status_nf
+            WHERE codigo_tracking = ?
         """
 
-        cursor.execute(query, (nf,))
+        cursor.execute(query, (codigo_tracking,))
         row = cursor.fetchone()
 
         conn.close()
 
         if row:
             return {
-                "numero_nf": row["numero_nf"],
-                "cliente": row["cliente"],
-                "status": row["status"]
+                "codigo_tracking": row[0],
+                "numero_nf": row[1],
+                "pedido": row[2],
+                "cliente": row[3],
+                "transportadora": row[4],
+                "status": row[5],
+                "etapa": row[6],
+                "observacao": row[7]
             }
         else:
             return {
-                "numero_nf": nf,
+                "codigo_tracking": codigo_tracking,
                 "cliente": "Não encontrado",
-                "status": "NF não localizada"
+                "status": "Código não localizado"
             }
 
     except Exception as e:
