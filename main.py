@@ -14,7 +14,7 @@ password = "Forcon@2026!"
 
 def get_connection():
     conn = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};"
+        "DRIVER={ODBC Driver 17 for SQL Server};"
         f"SERVER={server};"
         f"DATABASE={database};"
         f"UID={username};"
