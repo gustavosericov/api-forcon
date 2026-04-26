@@ -1,33 +1,35 @@
 from fastapi import FastAPI
-import pyodbc
+from sqlalchemy import create_engine, text
 
 app = FastAPI()
+
+# =========================
+# CONEXÃO AZURE SQL (CLOUD SAFE)
+# =========================
 
 server = "forcon-sql-server-demo.database.windows.net"
 database = "free-sql-db-1455719"
 username = "forconadmin"
 password = "Forcon@2026!"
 
-def get_connection():
-    return pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};"
-        f"SERVER={server};"
-        f"DATABASE={database};"
-        f"UID={username};"
-        f"PWD={password};"
-        "Encrypt=yes;"
-        "TrustServerCertificate=yes;"
-        "Connection Timeout=30;"
-    )
+connection_string = (
+    "mssql+pyodbc://"
+    f"{username}:{password}@{server}/{database}"
+    "?driver=ODBC+Driver+17+for+SQL+Server"
+)
+
+engine = create_engine(connection_string)
+
+
+# =========================
+# API CONSULTA PEDIDO
+# =========================
 
 @app.get("/pedido/{codigo_tracking}")
 def get_pedido(codigo_tracking: str):
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        query = """
-            SELECT
+        query = text("""
+            SELECT TOP 1
                 codigo_tracking,
                 numero_nf,
                 numero_pedido,
@@ -37,29 +39,30 @@ def get_pedido(codigo_tracking: str):
                 etapa_atual,
                 observacao
             FROM portal_cliente_status_nf
-            WHERE codigo_tracking = ?
-        """
+            WHERE codigo_tracking = :codigo
+        """)
 
-        cursor.execute(query, (codigo_tracking,))
-        row = cursor.fetchone()
-        conn.close()
+        with engine.connect() as conn:
+            result = conn.execute(query, {"codigo": codigo_tracking}).fetchone()
 
-        if row:
+        if result:
             return {
-                "codigo_tracking": row[0],
-                "numero_nf": row[1],
-                "numero_pedido": row[2],
-                "cliente": row[3],
-                "transportadora": row[4],
-                "status_atual": row[5],
-                "etapa_atual": row[6],
-                "observacao": row[7]
+                "codigo_tracking": result[0],
+                "numero_nf": result[1],
+                "numero_pedido": result[2],
+                "cliente": result[3],
+                "transportadora": result[4],
+                "status_atual": result[5],
+                "etapa_atual": result[6],
+                "observacao": result[7]
             }
-        else:
-            return {
-                "codigo_tracking": codigo_tracking,
-                "status": "não encontrado"
-            }
+
+        return {
+            "codigo_tracking": codigo_tracking,
+            "status": "não encontrado"
+        }
 
     except Exception as e:
-        return {"erro": str(e)}
+        return {
+            "erro": str(e)
+        }
