@@ -8,14 +8,22 @@ database = "free-sql-db-1455719"
 username = "forconadmin"
 password = "Forcon@2026!"
 
+# =========================
+# CONEXÃO AZURE SQL (CORRIGIDA)
+# =========================
 def get_conn():
     return pytds.connect(
         server,
         database,
         user=username,
-        password=password
+        password=password,
+        encrypt=True,
+        validate_host=False
     )
 
+# =========================
+# API CONSULTA PEDIDO
+# =========================
 @app.get("/pedido/{codigo_tracking}")
 def get_pedido(codigo_tracking: str):
     try:
