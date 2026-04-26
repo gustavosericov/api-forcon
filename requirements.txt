@@ -1,3 +1,3 @@
 fastapi
 uvicorn
-pyodbc
+python-tds

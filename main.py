@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-import pyodbc
+import pytds
 
 app = FastAPI()
 
@@ -8,22 +8,18 @@ database = "free-sql-db-1455719"
 username = "forconadmin"
 password = "Forcon@2026!"
 
-def get_connection():
-    return pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};"
-        f"SERVER={server};"
-        f"DATABASE={database};"
-        f"UID={username};"
-        f"PWD={password};"
-        "Encrypt=yes;"
-        "TrustServerCertificate=yes;"
-        "Connection Timeout=30;"
+def get_conn():
+    return pytds.connect(
+        server,
+        database,
+        user=username,
+        password=password
     )
 
 @app.get("/pedido/{codigo_tracking}")
 def get_pedido(codigo_tracking: str):
     try:
-        conn = get_connection()
+        conn = get_conn()
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -37,7 +33,7 @@ def get_pedido(codigo_tracking: str):
                 etapa_atual,
                 observacao
             FROM portal_cliente_status_nf
-            WHERE codigo_tracking = ?
+            WHERE codigo_tracking = %s
         """, (codigo_tracking,))
 
         row = cursor.fetchone()
