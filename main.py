@@ -3,17 +3,13 @@ import pyodbc
 
 app = FastAPI()
 
-# =========================
-# CONEXÃO AZURE SQL
-# =========================
-
 server = "forcon-sql-server-demo.database.windows.net"
 database = "free-sql-db-1455719"
 username = "forconadmin"
 password = "Forcon@2026!"
 
 def get_connection():
-    conn = pyodbc.connect(
+    return pyodbc.connect(
         "DRIVER={ODBC Driver 18 for SQL Server};"
         f"SERVER={server};"
         f"DATABASE={database};"
@@ -23,12 +19,6 @@ def get_connection():
         "TrustServerCertificate=yes;"
         "Connection Timeout=30;"
     )
-    return conn
-
-
-# =========================
-# API CONSULTA PEDIDO
-# =========================
 
 @app.get("/pedido/{codigo_tracking}")
 def get_pedido(codigo_tracking: str):
@@ -52,7 +42,6 @@ def get_pedido(codigo_tracking: str):
 
         cursor.execute(query, (codigo_tracking,))
         row = cursor.fetchone()
-
         conn.close()
 
         if row:
@@ -69,11 +58,8 @@ def get_pedido(codigo_tracking: str):
         else:
             return {
                 "codigo_tracking": codigo_tracking,
-                "cliente": "Não encontrado",
-                "status": "Código não localizado"
+                "status": "não encontrado"
             }
 
     except Exception as e:
-        return {
-            "erro": str(e)
-        }
+        return {"erro": str(e)}
