@@ -3,27 +3,18 @@ from sqlalchemy import create_engine, text
 
 app = FastAPI()
 
-# =========================
-# CONEXÃO AZURE SQL (CLOUD SAFE)
-# =========================
-
 server = "forcon-sql-server-demo.database.windows.net"
 database = "free-sql-db-1455719"
 username = "forconadmin"
 password = "Forcon@2026!"
 
+# 🔥 DRIVER ZERO ODBC (USANDO PYTDDS VIA SQLALCHEMY)
 connection_string = (
-    "mssql+pyodbc://"
-    f"{username}:{password}@{server}/{database}"
-    "?driver=ODBC+Driver+17+for+SQL+Server"
+    f"mssql+pymssql://{username}:{password}@{server}/{database}"
 )
 
 engine = create_engine(connection_string)
 
-
-# =========================
-# API CONSULTA PEDIDO
-# =========================
 
 @app.get("/pedido/{codigo_tracking}")
 def get_pedido(codigo_tracking: str):
@@ -57,12 +48,7 @@ def get_pedido(codigo_tracking: str):
                 "observacao": result[7]
             }
 
-        return {
-            "codigo_tracking": codigo_tracking,
-            "status": "não encontrado"
-        }
+        return {"erro": "não encontrado"}
 
     except Exception as e:
-        return {
-            "erro": str(e)
-        }
+        return {"erro": str(e)}
