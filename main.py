@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from sqlalchemy import create_engine, text
+import pymssql
 
 app = FastAPI()
 
@@ -8,53 +8,50 @@ database = "free-sql-db-1455719"
 username = "forconadmin"
 password = "Forcon@2026!"
 
-connection_string = (
-    "mssql+pyodbc://{user}:{pwd}@{host}/{db}"
-    "?driver=ODBC+Driver+17+for+SQL+Server"
-    "&encrypt=yes"
-    "&trustServerCertificate=yes"
-).format(
-    user=username,
-    pwd=password,
-    host=server,
-    db=database
-)
-
-engine = create_engine(connection_string)
+def get_conn():
+    return pymssql.connect(
+        server=server,
+        user=username,
+        password=password,
+        database=database
+    )
 
 @app.get("/pedido/{codigo_tracking}")
 def get_pedido(codigo_tracking: str):
     try:
-        with engine.connect() as conn:
-            result = conn.execute(text("""
-                SELECT TOP 1
-                    codigo_tracking,
-                    numero_nf,
-                    numero_pedido,
-                    cliente,
-                    transportadora,
-                    status_atual,
-                    etapa_atual,
-                    observacao
-                FROM portal_cliente_status_nf
-                WHERE codigo_tracking = :codigo
-            """), {"codigo": codigo_tracking})
+        conn = get_conn()
+        cursor = conn.cursor()
 
-            row = result.fetchone()
+        cursor.execute("""
+            SELECT TOP 1
+                codigo_tracking,
+                numero_nf,
+                numero_pedido,
+                cliente,
+                transportadora,
+                status_atual,
+                etapa_atual,
+                observacao
+            FROM portal_cliente_status_nf
+            WHERE codigo_tracking = %s
+        """, (codigo_tracking,))
 
-            if row:
-                return {
-                    "codigo_tracking": row[0],
-                    "numero_nf": row[1],
-                    "numero_pedido": row[2],
-                    "cliente": row[3],
-                    "transportadora": row[4],
-                    "status_atual": row[5],
-                    "etapa_atual": row[6],
-                    "observacao": row[7]
-                }
+        row = cursor.fetchone()
+        conn.close()
 
-            return {"erro": "não encontrado"}
+        if row:
+            return {
+                "codigo_tracking": row[0],
+                "numero_nf": row[1],
+                "numero_pedido": row[2],
+                "cliente": row[3],
+                "transportadora": row[4],
+                "status_atual": row[5],
+                "etapa_atual": row[6],
+                "observacao": row[7]
+            }
+
+        return {"erro": "não encontrado"}
 
     except Exception as e:
         return {"erro": str(e)}
