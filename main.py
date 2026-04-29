@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 import pymssql
+from datetime import datetime
 
 app = FastAPI()
 
@@ -15,6 +16,37 @@ def get_conn():
         password=password,
         database=database
     )
+
+# =========================
+# HELPERS (REGRA GLOBAL)
+# =========================
+
+def clean(value):
+    if value is None:
+        return ""
+    return value
+
+def format_date(value):
+    if not value:
+        return ""
+    try:
+        dt = datetime.fromisoformat(str(value))
+        return dt.strftime("%d/%m/%Y")
+    except:
+        return ""
+
+def format_datetime(value):
+    if not value:
+        return ""
+    try:
+        dt = datetime.fromisoformat(str(value))
+        return dt.strftime("%d/%m/%Y - %H:%Mhs")
+    except:
+        return ""
+
+# =========================
+# API
+# =========================
 
 @app.get("/pedido/{codigo_tracking}")
 def get_pedido(codigo_tracking: str):
@@ -48,22 +80,24 @@ def get_pedido(codigo_tracking: str):
 
         if row:
             return {
-                "codigo_tracking": row[0],
-                "numero_nf": row[1],
-                "numero_pedido": row[2],
-                "cliente": row[3],
-                "transportadora": row[4],
-                "status_atual": row[5],
-                "etapa_atual": row[6],
-                "observacao": row[7],
+                "codigo_tracking": clean(row[0]),
+                "numero_nf": clean(row[1]),
+                "numero_pedido": clean(row[2]),
+                "cliente": clean(row[3]),
+                "transportadora": clean(row[4]),
+                "status_atual": clean(row[5]),
+                "etapa_atual": clean(row[6]),
+                "observacao": clean(row[7]),
 
-                "numero_coleta": row[8],
-                "data_pedido": row[9],
-                "data_coleta": row[10],
-                "data_saida_forcon": row[11],
-                "data_faturamento": row[12],
-                "previsao_entrega": row[13],
-                "ultima_atualizacao": row[14]
+                "numero_coleta": clean(row[8]),
+
+                "data_pedido": format_date(row[9]),
+                "data_coleta": format_date(row[10]),
+                "data_saida_forcon": format_date(row[11]),
+                "data_faturamento": format_date(row[12]),
+                "previsao_entrega": format_date(row[13]),
+
+                "ultima_atualizacao": format_datetime(row[14])
             }
 
         return {"erro": "não encontrado"}
