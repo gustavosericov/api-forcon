@@ -31,7 +31,14 @@ def get_pedido(codigo_tracking: str):
                 transportadora,
                 status_atual,
                 etapa_atual,
-                observacao
+                observacao,
+                numero_coleta,
+                data_pedido,
+                data_coleta,
+                data_saida_forcon,
+                data_faturamento,
+                previsao_entrega,
+                ultima_atualizacao
             FROM portal_cliente_status_nf
             WHERE codigo_tracking = %s
         """, (codigo_tracking,))
@@ -48,7 +55,15 @@ def get_pedido(codigo_tracking: str):
                 "transportadora": row[4],
                 "status_atual": row[5],
                 "etapa_atual": row[6],
-                "observacao": row[7]
+                "observacao": row[7],
+
+                "numero_coleta": row[8],
+                "data_pedido": row[9],
+                "data_coleta": row[10],
+                "data_saida_forcon": row[11],
+                "data_faturamento": row[12],
+                "previsao_entrega": row[13],
+                "ultima_atualizacao": row[14]
             }
 
         return {"erro": "não encontrado"}
