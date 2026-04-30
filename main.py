@@ -35,18 +35,18 @@ def get_conn():
     )
 
 # =========================
-# HELPERS
+# HELPERS (VERSÃO FINAL ROBUSTA)
 # =========================
 
 def clean(value):
     if value is None:
         return ""
-    if str(value).lower() in ["none", "null", ""]:
+    if str(value).strip().lower() in ["none", "null", ""]:
         return ""
     return value
 
 def parse_datetime(value):
-    if not value:
+    if value is None:
         return None
 
     if isinstance(value, datetime):
@@ -57,16 +57,23 @@ def parse_datetime(value):
     if val.lower() in ["none", "null", ""]:
         return None
 
-    try:
-        return datetime.strptime(val, "%Y-%m-%d %H:%M:%S.%f")
-    except:
+    # tenta formatos mais comuns do SQL Server
+    formats = [
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%d %H:%M:%S"
+    ]
+
+    for f in formats:
         try:
-            return datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+            return datetime.strptime(val, f)
         except:
-            try:
-                return datetime.fromisoformat(val)
-            except:
-                return None
+            pass
+
+    # fallback final
+    try:
+        return datetime.fromisoformat(val)
+    except:
+        return None
 
 def format_date(value):
     dt = parse_datetime(value)
