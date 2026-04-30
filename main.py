@@ -136,13 +136,13 @@ def get_pedido(codigo_tracking: str):
             "observacao": clean(row[7]),
             "numero_coleta": clean(row[8]),
 
-            "data_pedido": format_date(row[9]),
-            "data_coleta": format_date(row[10]),
-            "data_saida_forcon": format_date(row[11]),
-            "data_faturamento": format_date(row[12]),
-            "previsao_entrega": format_date(row[13]),
+            "data_pedido": row[9].strftime("%d/%m/%Y") if row[9] else "",
+"data_coleta": row[10].strftime("%d/%m/%Y") if row[10] else "",
+"data_saida_forcon": row[11].strftime("%d/%m/%Y") if row[11] else "",
+"data_faturamento": row[12].strftime("%d/%m/%Y") if row[12] else "",
+"previsao_entrega": row[13].strftime("%d/%m/%Y") if row[13] else "",
 
-            "ultima_atualizacao": format_datetime(row[14])
+"ultima_atualizacao": format_datetime(row[14])
         }
 
     except Exception as e:
