@@ -35,7 +35,7 @@ def get_conn():
     )
 
 # =========================
-# HELPERS (BLINDADO 100%)
+# HELPERS (BLINDADO)
 # =========================
 
 def clean(value):
@@ -45,40 +45,31 @@ def clean(value):
         return ""
     return value
 
+
 def safe_date(value):
-    """
-    Aceita:
-    - datetime
-    - string datetime
-    - None
-    - qualquer lixo do pymssql
-    """
     if value is None:
         return ""
 
     try:
-        # já é datetime
         if isinstance(value, datetime):
             return value.strftime("%d/%m/%Y")
 
-        # tenta converter string normal
         val = str(value).strip()
 
         if val.lower() in ["none", "null", ""]:
             return ""
 
-        # tenta formatos SQL Server
         for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
             try:
                 return datetime.strptime(val, fmt).strftime("%d/%m/%Y")
             except:
                 pass
 
-        # fallback final
         return val[:10] if len(val) >= 10 else val
 
     except:
         return ""
+
 
 def format_datetime(value):
     if value is None:
@@ -102,7 +93,7 @@ def format_datetime(value):
 def get_pedido(codigo_tracking: str):
     try:
         conn = get_conn()
-        cursor = conn.cursor()
+        cursor = conn.cursor(as_dict=True)  # 🔥 CORREÇÃO PRINCIPAL
 
         cursor.execute("""
             SELECT TOP 1
@@ -132,24 +123,24 @@ def get_pedido(codigo_tracking: str):
             return {"erro": "não encontrado"}
 
         return {
-            "codigo_tracking": clean(row[0]),
-            "numero_nf": clean(row[1]),
-            "numero_pedido": clean(row[2]),
-            "cliente": clean(row[3]),
-            "transportadora": clean(row[4]),
-            "status_atual": clean(row[5]),
-            "etapa_atual": clean(row[6]),
-            "observacao": clean(row[7]),
-            "numero_coleta": clean(row[8]),
+            "codigo_tracking": clean(row["codigo_tracking"]),
+            "numero_nf": clean(row["numero_nf"]),
+            "numero_pedido": clean(row["numero_pedido"]),
+            "cliente": clean(row["cliente"]),
+            "transportadora": clean(row["transportadora"]),
+            "status_atual": clean(row["status_atual"]),
+            "etapa_atual": clean(row["etapa_atual"]),
+            "observacao": clean(row["observacao"]),
+            "numero_coleta": clean(row["numero_coleta"]),
 
-            # 🔥 BLINDAGEM TOTAL DE DATAS
-            "data_pedido": safe_date(row[9]),
-            "data_coleta": safe_date(row[10]),
-            "data_saida_forcon": safe_date(row[11]),
-            "data_faturamento": safe_date(row[12]),
-            "previsao_entrega": safe_date(row[13]),
+            # 🔥 DATAS 100% SEGURAS
+            "data_pedido": safe_date(row["data_pedido"]),
+            "data_coleta": safe_date(row["data_coleta"]),
+            "data_saida_forcon": safe_date(row["data_saida_forcon"]),
+            "data_faturamento": safe_date(row["data_faturamento"]),
+            "previsao_entrega": safe_date(row["previsao_entrega"]),
 
-            "ultima_atualizacao": format_datetime(row[14])
+            "ultima_atualizacao": format_datetime(row["ultima_atualizacao"])
         }
 
     except Exception as e:
