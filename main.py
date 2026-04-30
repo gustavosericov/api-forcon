@@ -6,7 +6,7 @@ from datetime import datetime
 app = FastAPI()
 
 # =========================
-# CORS (ESSENCIAL PARA WEB / IPHONE)
+# CORS
 # =========================
 
 app.add_middleware(
@@ -35,29 +35,38 @@ def get_conn():
     )
 
 # =========================
-# HELPERS (ROBUSTOS)
+# HELPERS
 # =========================
 
 def clean(value):
     if value is None:
         return ""
+    if str(value).lower() in ["none", "null", ""]:
+        return ""
     return value
 
 def parse_datetime(value):
-    """Tenta converter qualquer formato vindo do SQL Server"""
     if not value:
         return None
 
     if isinstance(value, datetime):
         return value
 
+    val = str(value).strip()
+
+    if val.lower() in ["none", "null", ""]:
+        return None
+
     try:
-        return datetime.strptime(str(value), "%Y-%m-%d %H:%M:%S.%f")
+        return datetime.strptime(val, "%Y-%m-%d %H:%M:%S.%f")
     except:
         try:
-            return datetime.strptime(str(value), "%Y-%m-%d %H:%M:%S")
+            return datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
         except:
-            return None
+            try:
+                return datetime.fromisoformat(val)
+            except:
+                return None
 
 def format_date(value):
     dt = parse_datetime(value)
@@ -115,11 +124,10 @@ def get_pedido(codigo_tracking: str):
                 "status_atual": clean(row[5]),
                 "etapa_atual": clean(row[6]),
                 "observacao": clean(row[7]),
-
                 "numero_coleta": clean(row[8]),
 
-                "data_pedido": str(row[9]),
-                "data_coleta": str(row[10]),
+                "data_pedido": format_date(row[9]),
+                "data_coleta": format_date(row[10]),
                 "data_saida_forcon": format_date(row[11]),
                 "data_faturamento": format_date(row[12]),
                 "previsao_entrega": format_date(row[13]),
