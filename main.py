@@ -118,8 +118,8 @@ def get_pedido(codigo_tracking: str):
 
                 "numero_coleta": clean(row[8]),
 
-                "data_pedido": format_date(row[9]),
-                "data_coleta": format_date(row[10]),
+                "data_pedido": str(row[9]),
+                "data_coleta": str(row[10]),
                 "data_saida_forcon": format_date(row[11]),
                 "data_faturamento": format_date(row[12]),
                 "previsao_entrega": format_date(row[13]),
