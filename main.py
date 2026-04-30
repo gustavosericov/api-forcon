@@ -120,6 +120,7 @@ def get_pedido(codigo_tracking: str):
         """, (codigo_tracking,))
 
         row = cursor.fetchone()
+	print("ROW DEBUG:", row)
         conn.close()
 
         if not row:
