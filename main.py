@@ -35,7 +35,7 @@ def get_conn():
     )
 
 # =========================
-# HELPERS (FINAL ROBUSTO)
+# HELPERS
 # =========================
 
 def clean(value):
@@ -45,47 +45,18 @@ def clean(value):
         return ""
     return value
 
-def parse_datetime(value):
+def format_datetime(value):
     if value is None:
-        return None
+        return ""
 
     if isinstance(value, datetime):
-        return value
-
-    val = str(value).strip()
-
-    if val.lower() in ["none", "null", ""]:
-        return None
-
-    # formatos SQL Server mais comuns
-    formats = [
-        "%Y-%m-%d %H:%M:%S.%f",
-        "%Y-%m-%d %H:%M:%S",
-        "%Y-%m-%d"
-    ]
-
-    for f in formats:
+        dt = value
+    else:
         try:
-            return datetime.strptime(val, f)
+            dt = datetime.fromisoformat(str(value))
         except:
-            continue
+            return ""
 
-    # fallback ISO seguro
-    try:
-        return datetime.fromisoformat(val)
-    except:
-        return None
-
-def format_date(value):
-    dt = parse_datetime(value)
-    if dt is None:
-        return ""
-    return dt.strftime("%d/%m/%Y")
-
-def format_datetime(value):
-    dt = parse_datetime(value)
-    if dt is None:
-        return ""
     return dt.strftime("%d/%m/%Y - %H:%Mhs")
 
 # =========================
@@ -120,7 +91,6 @@ def get_pedido(codigo_tracking: str):
         """, (codigo_tracking,))
 
         row = cursor.fetchone()
-	print("ROW DEBUG:", row)
         conn.close()
 
         if not row:
@@ -138,12 +108,12 @@ def get_pedido(codigo_tracking: str):
             "numero_coleta": clean(row[8]),
 
             "data_pedido": row[9].strftime("%d/%m/%Y") if row[9] else "",
-"data_coleta": row[10].strftime("%d/%m/%Y") if row[10] else "",
-"data_saida_forcon": row[11].strftime("%d/%m/%Y") if row[11] else "",
-"data_faturamento": row[12].strftime("%d/%m/%Y") if row[12] else "",
-"previsao_entrega": row[13].strftime("%d/%m/%Y") if row[13] else "",
+            "data_coleta": row[10].strftime("%d/%m/%Y") if row[10] else "",
+            "data_saida_forcon": row[11].strftime("%d/%m/%Y") if row[11] else "",
+            "data_faturamento": row[12].strftime("%d/%m/%Y") if row[12] else "",
+            "previsao_entrega": row[13].strftime("%d/%m/%Y") if row[13] else "",
 
-"ultima_atualizacao": format_datetime(row[14])
+            "ultima_atualizacao": format_datetime(row[14])
         }
 
     except Exception as e:
