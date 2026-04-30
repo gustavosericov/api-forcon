@@ -35,7 +35,7 @@ def get_conn():
     )
 
 # =========================
-# HELPERS
+# HELPERS (BLINDADO 100%)
 # =========================
 
 def clean(value):
@@ -45,17 +45,52 @@ def clean(value):
         return ""
     return value
 
+def safe_date(value):
+    """
+    Aceita:
+    - datetime
+    - string datetime
+    - None
+    - qualquer lixo do pymssql
+    """
+    if value is None:
+        return ""
+
+    try:
+        # já é datetime
+        if isinstance(value, datetime):
+            return value.strftime("%d/%m/%Y")
+
+        # tenta converter string normal
+        val = str(value).strip()
+
+        if val.lower() in ["none", "null", ""]:
+            return ""
+
+        # tenta formatos SQL Server
+        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(val, fmt).strftime("%d/%m/%Y")
+            except:
+                pass
+
+        # fallback final
+        return val[:10] if len(val) >= 10 else val
+
+    except:
+        return ""
+
 def format_datetime(value):
     if value is None:
         return ""
 
-    if isinstance(value, datetime):
-        dt = value
-    else:
-        try:
+    try:
+        if isinstance(value, datetime):
+            dt = value
+        else:
             dt = datetime.fromisoformat(str(value))
-        except:
-            return ""
+    except:
+        return ""
 
     return dt.strftime("%d/%m/%Y - %H:%Mhs")
 
@@ -107,11 +142,12 @@ def get_pedido(codigo_tracking: str):
             "observacao": clean(row[7]),
             "numero_coleta": clean(row[8]),
 
-            "data_pedido": row[9].strftime("%d/%m/%Y") if row[9] else "",
-            "data_coleta": row[10].strftime("%d/%m/%Y") if row[10] else "",
-            "data_saida_forcon": row[11].strftime("%d/%m/%Y") if row[11] else "",
-            "data_faturamento": row[12].strftime("%d/%m/%Y") if row[12] else "",
-            "previsao_entrega": row[13].strftime("%d/%m/%Y") if row[13] else "",
+            # 🔥 BLINDAGEM TOTAL DE DATAS
+            "data_pedido": safe_date(row[9]),
+            "data_coleta": safe_date(row[10]),
+            "data_saida_forcon": safe_date(row[11]),
+            "data_faturamento": safe_date(row[12]),
+            "previsao_entrega": safe_date(row[13]),
 
             "ultima_atualizacao": format_datetime(row[14])
         }
