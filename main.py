@@ -11,7 +11,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # depois podemos restringir
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,7 +35,7 @@ def get_conn():
     )
 
 # =========================
-# HELPERS (REGRA GLOBAL)
+# HELPERS (ROBUSTOS)
 # =========================
 
 def clean(value):
@@ -43,23 +43,33 @@ def clean(value):
         return ""
     return value
 
-def format_date(value):
+def parse_datetime(value):
+    """Tenta converter qualquer formato vindo do SQL Server"""
     if not value:
-        return ""
+        return None
+
+    if isinstance(value, datetime):
+        return value
+
     try:
-        dt = datetime.fromisoformat(str(value))
-        return dt.strftime("%d/%m/%Y")
+        return datetime.strptime(str(value), "%Y-%m-%d %H:%M:%S.%f")
     except:
+        try:
+            return datetime.strptime(str(value), "%Y-%m-%d %H:%M:%S")
+        except:
+            return None
+
+def format_date(value):
+    dt = parse_datetime(value)
+    if not dt:
         return ""
+    return dt.strftime("%d/%m/%Y")
 
 def format_datetime(value):
-    if not value:
+    dt = parse_datetime(value)
+    if not dt:
         return ""
-    try:
-        dt = datetime.fromisoformat(str(value))
-        return dt.strftime("%d/%m/%Y - %H:%Mhs")
-    except:
-        return ""
+    return dt.strftime("%d/%m/%Y - %H:%Mhs")
 
 # =========================
 # API
