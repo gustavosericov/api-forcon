@@ -1,8 +1,25 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import pymssql
 from datetime import datetime
 
 app = FastAPI()
+
+# =========================
+# CORS (ESSENCIAL PARA WEB / IPHONE)
+# =========================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # depois podemos restringir
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# =========================
+# CONEXÃO
+# =========================
 
 server = "forcon-sql-server-demo.database.windows.net"
 database = "free-sql-db-1455719"
