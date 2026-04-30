@@ -35,7 +35,7 @@ def get_conn():
     )
 
 # =========================
-# HELPERS (VERSÃO FINAL ROBUSTA)
+# HELPERS (FINAL ROBUSTO)
 # =========================
 
 def clean(value):
@@ -57,19 +57,20 @@ def parse_datetime(value):
     if val.lower() in ["none", "null", ""]:
         return None
 
-    # tenta formatos mais comuns do SQL Server
+    # formatos SQL Server mais comuns
     formats = [
         "%Y-%m-%d %H:%M:%S.%f",
-        "%Y-%m-%d %H:%M:%S"
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d"
     ]
 
     for f in formats:
         try:
             return datetime.strptime(val, f)
         except:
-            pass
+            continue
 
-    # fallback final
+    # fallback ISO seguro
     try:
         return datetime.fromisoformat(val)
     except:
@@ -77,13 +78,13 @@ def parse_datetime(value):
 
 def format_date(value):
     dt = parse_datetime(value)
-    if not dt:
+    if dt is None:
         return ""
     return dt.strftime("%d/%m/%Y")
 
 def format_datetime(value):
     dt = parse_datetime(value)
-    if not dt:
+    if dt is None:
         return ""
     return dt.strftime("%d/%m/%Y - %H:%Mhs")
 
@@ -121,28 +122,28 @@ def get_pedido(codigo_tracking: str):
         row = cursor.fetchone()
         conn.close()
 
-        if row:
-            return {
-                "codigo_tracking": clean(row[0]),
-                "numero_nf": clean(row[1]),
-                "numero_pedido": clean(row[2]),
-                "cliente": clean(row[3]),
-                "transportadora": clean(row[4]),
-                "status_atual": clean(row[5]),
-                "etapa_atual": clean(row[6]),
-                "observacao": clean(row[7]),
-                "numero_coleta": clean(row[8]),
+        if not row:
+            return {"erro": "não encontrado"}
 
-                "data_pedido": format_date(row[9]),
-                "data_coleta": format_date(row[10]),
-                "data_saida_forcon": format_date(row[11]),
-                "data_faturamento": format_date(row[12]),
-                "previsao_entrega": format_date(row[13]),
+        return {
+            "codigo_tracking": clean(row[0]),
+            "numero_nf": clean(row[1]),
+            "numero_pedido": clean(row[2]),
+            "cliente": clean(row[3]),
+            "transportadora": clean(row[4]),
+            "status_atual": clean(row[5]),
+            "etapa_atual": clean(row[6]),
+            "observacao": clean(row[7]),
+            "numero_coleta": clean(row[8]),
 
-                "ultima_atualizacao": format_datetime(row[14])
-            }
+            "data_pedido": format_date(row[9]),
+            "data_coleta": format_date(row[10]),
+            "data_saida_forcon": format_date(row[11]),
+            "data_faturamento": format_date(row[12]),
+            "previsao_entrega": format_date(row[13]),
 
-        return {"erro": "não encontrado"}
+            "ultima_atualizacao": format_datetime(row[14])
+        }
 
     except Exception as e:
         return {"erro": str(e)}
